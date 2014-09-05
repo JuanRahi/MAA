@@ -15,7 +15,10 @@ public class AlgoID3 {
 	private String[] allAttributes; 
 	private int indexTargetAttribute = -1; 
 	private Set<String> targetAttributeValues = new HashSet<>(); 
+        private int algoMode;
         private int totalInstances = -1; 
+        private int contAtrMin = 17;
+        private int contAtrMax = 21;
 	
 
 	/**
@@ -29,7 +32,7 @@ public class AlgoID3 {
 	public DecisionTree runAlgorithm(String input, String targetAttribute,
 			String separator, int mode) throws IOException {	
 	
-		
+		algoMode = mode;
 		DecisionTree tree = new DecisionTree();
 		BufferedReader reader = new BufferedReader(new FileReader(input));
 
@@ -63,13 +66,13 @@ public class AlgoID3 {
 
                 totalInstances = instances.size();
 		
-		tree.root = id3(remainingAttributes, instances, mode);
+		tree.root = id3(remainingAttributes, instances);
 		tree.allAttributes = allAttributes;				
 		
 		return tree; 
 	}
 
-	private Node id3(int[] remainingAttributes, List<String[]> instances, int mode) {
+	private Node id3(int[] remainingAttributes, List<String[]> instances) {
 		if (remainingAttributes.length == 0) {
 			Map<String, Integer> targetValuesFrequency = calculateFrequencyOfAttributeValues(
 					instances, indexTargetAttribute);
@@ -110,9 +113,9 @@ public class AlgoID3 {
 		}
 
 		int attributeWithHighestGain = 0;
-		double highestGain = -99999;
+		double highestGain = Double.NEGATIVE_INFINITY;
 		for (int attribute : remainingAttributes) {
-			double gain = calculateGain(attribute, instances, globalEntropy, mode);
+			double gain = calculateGain(attribute, instances, globalEntropy);
 			if (gain >= highestGain) {
 				highestGain = gain;
 				attributeWithHighestGain = attribute;
@@ -146,13 +149,25 @@ public class AlgoID3 {
 
 		Map<String, List<String[]>> partitions = new HashMap<String, List<String[]>>();
 		for (String[] instance : instances) {
-			String value = instance[attributeWithHighestGain];
-			List<String[]> listInstances = partitions.get(value);
-			if (listInstances == null) {
-				listInstances = new ArrayList<String[]>();
-				partitions.put(value, listInstances);
-			}
-			listInstances.add(instance);
+                    String value = instance[attributeWithHighestGain];
+                    // Atr con valores continuos
+                    if (algoMode == 3 && attributeWithHighestGain > contAtrMin && attributeWithHighestGain < contAtrMax){
+                        try{    
+                            Double d = Double.parseDouble(instance[attributeWithHighestGain]);
+                            int index = (int) (d/100);
+                            int limit = (index*100) + 100;
+                            value = "[" + Integer.toString(index*100) + " - " + Integer.toString(limit) +  "]";
+                        }
+                        catch(Exception ex){
+                        }
+                    }
+                			
+                    List<String[]> listInstances = partitions.get(value);
+                    if (listInstances == null) {
+                            listInstances = new ArrayList<String[]>();
+                            partitions.put(value, listInstances);
+                    }
+                    listInstances.add(instance);
 		}
 
 		decisionNode.nodes = new Node[partitions.size()];
@@ -162,7 +177,7 @@ public class AlgoID3 {
 		for (Entry<String, List<String[]>> partition : partitions.entrySet()) {
 			decisionNode.attributeValues[index] = partition.getKey();
 			decisionNode.nodes[index] = id3(newRemainingAttribute,
-					partition.getValue(), mode); // recursive call
+					partition.getValue()); // recursive call
 			index++;
 		}
 		
@@ -171,7 +186,7 @@ public class AlgoID3 {
 
         
 	private double calculateGain(int attributePos, List<String[]> instances,
-			double globalEntropy, int mode) {
+			double globalEntropy) {
 
 		Map<String, Integer> valuesFrequency = calculateFrequencyOfAttributeValues(
 				instances, attributePos);
@@ -186,7 +201,7 @@ public class AlgoID3 {
 		}		
                 
                 // penalizar valores uniformes
-                if (mode == 2) {
+                if (algoMode == 2) {
                     double splitInfo = splitInformation(valuesFrequency, totalInstances);
                     return ((globalEntropy - sum) / splitInfo);
                 }    
@@ -240,18 +255,38 @@ public class AlgoID3 {
 		
 	
 		for (String[] instance : instances) {
-	
-			String targetValue = instance[indexAttribute];
-	
-			if (targetValuesFrequency.get(targetValue) == null) {
-				targetValuesFrequency.put(targetValue, 1);
-			} else {
-				targetValuesFrequency.put(targetValue,
-						targetValuesFrequency.get(targetValue) + 1);
-			}
+                        
+                        if (algoMode == 3 && indexAttribute > contAtrMin && indexAttribute < contAtrMax){
+                            continuousAttributes(targetValuesFrequency, instance, indexAttribute);                        
+                        }
+                        else{                        
+                            String targetValue = instance[indexAttribute];
+                            if (targetValuesFrequency.get(targetValue) == null) {
+                                    targetValuesFrequency.put(targetValue, 1);
+                            } else {
+                                    targetValuesFrequency.put(targetValue,
+                                                    targetValuesFrequency.get(targetValue) + 1);
+                            }
+                        }
 		}
 		return targetValuesFrequency;
 	}
+        
+        private void continuousAttributes(Map<String, Integer> targetValuesFrequency, String[] instance, int indexAttribute){
+            try{
+                Double d = Double.parseDouble(instance[indexAttribute]);
+                int index = (int) (d/100);
+                int limit = (index*100) + 100;
+                String key = "[" + Integer.toString(index*100) + " - " + Integer.toString(limit) +  "]";
+
+                if (targetValuesFrequency.get(key) == null) 
+                    targetValuesFrequency.put(key, 1);
+                else
+                    targetValuesFrequency.put(key, targetValuesFrequency.get(key) + 1);                            
+            }
+            catch(Exception e){
+            }    
+        }
 
 	public void printStatistics() {
 		System.out.println("Target attribute = "

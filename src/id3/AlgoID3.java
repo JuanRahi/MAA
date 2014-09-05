@@ -57,7 +57,7 @@ public class AlgoID3 {
 	 * @throws IOException exception if error reading the file
 	 */
 	public DecisionTree runAlgorithm(String input, String targetAttribute,
-			String separator) throws IOException {
+			String separator, int mode) throws IOException {
 		// record the start time
 		startTime = System.currentTimeMillis();
 		
@@ -112,7 +112,7 @@ public class AlgoID3 {
 		// (2) Start the recusive process
 		
 		// create the tree
-		tree.root = id3(remainingAttributes, instances);
+		tree.root = id3(remainingAttributes, instances, mode);
 		tree.allAttributes = allAttributes;
 		
 		endTime = System.currentTimeMillis();  // record end time
@@ -127,7 +127,7 @@ public class AlgoID3 {
 	 * @param instances a list of training instances
 	 * @return node of the subtree created
 	 */
-	private Node id3(int[] remainingAttributes, List<String[]> instances) {
+	private Node id3(int[] remainingAttributes, List<String[]> instances, int mode) {
 		// if only one remaining attribute,
 		// return a class node with the most common value in the instances
 		if (remainingAttributes.length == 0) {
@@ -189,7 +189,7 @@ public class AlgoID3 {
 		int attributeWithHighestGain = 0;
 		double highestGain = -99999;
 		for (int attribute : remainingAttributes) {
-			double gain = calculateGain(attribute, instances, globalEntropy);
+			double gain = calculateGain(attribute, instances, globalEntropy, mode);
 			// System.out.println("Process " + allAttributes[attribute] +
 			// " gain = " + gain);
 			if (gain >= highestGain) {
@@ -253,7 +253,7 @@ public class AlgoID3 {
 		for (Entry<String, List<String[]>> partition : partitions.entrySet()) {
 			decisionNode.attributeValues[index] = partition.getKey();
 			decisionNode.nodes[index] = id3(newRemainingAttribute,
-					partition.getValue()); // recursive call
+					partition.getValue(), mode); // recursive call
 			index++;
 		}
 		
@@ -269,7 +269,7 @@ public class AlgoID3 {
 	 * @return the gain
 	 */
 	private double calculateGain(int attributePos, List<String[]> instances,
-			double globalEntropy) {
+			double globalEntropy, int mode) {
 		// Count the frequency of each value for the attribute
 		Map<String, Integer> valuesFrequency = calculateFrequencyOfAttributeValues(
 				instances, attributePos);
@@ -279,14 +279,33 @@ public class AlgoID3 {
 		// for each value
 		for (Entry<String, Integer> entry : valuesFrequency.entrySet()) {
 			// make the sum 
-			sum += entry.getValue()
-					/ ((double) instances.size())
+			sum += entry.getValue() / ((double) instances.size())
 					* calculateEntropyIfValue(instances, attributePos,
 							entry.getKey());
 		}
 		// subtract the sum from the global entropy
+                
+                // penalizar valores uniformes
+                if (mode == 2) {
+                    double splitInfo = splitInformation(valuesFrequency, instances.size());
+                    return ((globalEntropy - sum) / splitInfo);
+                }    
+                 
 		return globalEntropy - sum;
 	}
+        
+        private double splitInformation(Map<String, Integer> valuesFrequency, int size){
+                // Calculate 
+		double sum = 0;
+		// for each value
+		for (Entry<String, Integer> entry : valuesFrequency.entrySet()) {
+			// make the sum 
+                        double freq = entry.getValue() / ((double)size);
+			sum -=  freq * Math.log(freq) / Math.log(2);;					
+		}
+                return sum;
+        }
+                
 
 	/**
 	 * Calculate the entropy for the target attribute, if a given attribute has

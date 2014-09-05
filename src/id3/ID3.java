@@ -6,6 +6,12 @@
 
 package id3;
 
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
+
 /**
  *
  * @author juan
@@ -13,7 +19,18 @@ package id3;
 public class ID3 {
     
         public static void main(String[] args) {
-        
+            try {
+                AlgoID3 id3 = new AlgoID3();
+                String path = "/home/juan/NetBeansProjects/ID3/diabetic_data(200).csv";
+                String separator = ",";
+                String attr = "readmitted";                
+                int mode = 2;
+                DecisionTree runAlgorithm = id3.runAlgorithm(path, attr, separator, mode);
+                runAlgorithm.print();
+            } catch (IOException ex) {
+                Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
         }
     
 }

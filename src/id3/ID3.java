@@ -24,7 +24,7 @@ public class ID3 {
                 String path = "diabetic_data(200).csv";
                 String separator = ",";
                 String attr = "readmitted";                
-                int mode = 1;
+                int mode = 2;
                 DecisionTree runAlgorithm = id3.runAlgorithm(path, attr, separator, mode);
                 runAlgorithm.print();
             } catch (IOException ex) {

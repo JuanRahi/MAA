@@ -21,7 +21,7 @@ public class ID3 {
         public static void main(String[] args) {
             try {
                 AlgoID3 id3 = new AlgoID3();
-                String path = "diabetic_data(200).csv";
+                String path = "C:\\diabetic_data20000.txt";
                 String separator = ",";
                 String attr = "readmitted";                
                 int mode = 2;

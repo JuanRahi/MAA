@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,14 +31,15 @@ public class AlgoID3 {
                 String line = reader.readLine();
 		allAttributes = line.split(separator);
 				
-		int[] remainingAttributes = new int[allAttributes.length - 1];
+		
+                LinkedList<Integer> remainingAttributes = new LinkedList<>();
 		int pos = 0;
 		
 		for (int i = 0; i < allAttributes.length; i++) {		
 			if (allAttributes[i].equals(targetAttribute)) {
 				indexTargetAttribute = i;
 			} else {
-				remainingAttributes[pos++] = i;
+				remainingAttributes.add(i);
 			}
 		}
 
@@ -63,8 +65,8 @@ public class AlgoID3 {
 		return tree; 
 	}
 
-	private Node id3(int[] remainingAttributes, List<String[]> instances) {
-		if (remainingAttributes.length == 0) {
+	private Node id3(LinkedList<Integer> remainingAttributes, List<String[]> instances) {
+		if (remainingAttributes.size() == 0) {
 			Map<String, Integer> targetValuesFrequency = calculateFrequencyOfAttributeValues(
 					instances, indexTargetAttribute);
 			
@@ -112,7 +114,7 @@ public class AlgoID3 {
 				attributeWithHighestGain = attribute;
 			}
 		}
-			
+	
 		if (highestGain == 0) {
 			ClassNode classNode = new ClassNode();
 			int topFrequency = 0;
@@ -130,13 +132,7 @@ public class AlgoID3 {
 		DecisionNode decisionNode = new DecisionNode();
 		decisionNode.attribute = attributeWithHighestGain;
 
-		int[] newRemainingAttribute = new int[remainingAttributes.length - 1];
-		int pos = 0;
-		for (int i = 0; i < remainingAttributes.length; i++) {
-			if (remainingAttributes[i] != attributeWithHighestGain) {
-				newRemainingAttribute[pos++] = remainingAttributes[i];
-			}
-		}
+                remainingAttributes.remove(remainingAttributes.indexOf(attributeWithHighestGain));
 
 		Map<String, List<String[]>> partitions = new HashMap<String, List<String[]>>();
 		for (String[] instance : instances) {
@@ -167,7 +163,7 @@ public class AlgoID3 {
 		int index = 0;
 		for (Entry<String, List<String[]>> partition : partitions.entrySet()) {
 			decisionNode.attributeValues[index] = partition.getKey();
-			decisionNode.nodes[index] = id3(newRemainingAttribute,
+			decisionNode.nodes[index] = id3(remainingAttributes,
 					partition.getValue()); // recursive call
 			index++;
 		}

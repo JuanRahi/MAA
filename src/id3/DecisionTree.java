@@ -7,26 +7,28 @@ public class DecisionTree {
 	public void print() {
 		System.out.println("DECISION TREE");
 		String indent = " ";
-		print(root, indent, "");
+		print(root, indent, "", 1);
 	}
 
-	private void print(Node nodeToPrint, String indent, String value) {
+	private void print(Node nodeToPrint, String indent, String value, int level) {
 		String newIndent = indent + "  ";		
 		if(nodeToPrint instanceof ClassNode){
 			ClassNode node = (ClassNode) nodeToPrint;
-			System.out.println(indent + value + "="+ node.className);
+			//System.out.println(indent + "-----------------");
+                        System.out.println("\033[31m" + indent + level + ". "  + value + "="+ node.className);                                                
+                        //System.out.println(indent + "-------------------------");
 		}else{
 			DecisionNode node = (DecisionNode) nodeToPrint;
-			System.out.println(indent + allAttributes[node.attribute] + "->");
+			System.out.println(indent + level + ". " + allAttributes[node.attribute] + "->");
 			
 			for(int i=0; i< node.nodes.length; i++){
-				print(node.nodes[i], newIndent, node.attributeValues[i]);
+				print(node.nodes[i], newIndent, node.attributeValues[i], level + 1);
 			}
 		}
 		
 	}
 
-	public String predictTargetAttributeValue(String[] newInstance) {
+	/*public String predictTargetAttributeValue(String[] newInstance) {
 		return predict(root, newInstance);
 	}
 
@@ -45,7 +47,7 @@ public class DecisionTree {
 			}
 		}
 		return null; 
-	}
+	}*/
 	
 	
 

@@ -20,15 +20,6 @@ public class AlgoID3 {
         private int contAtrMin = 17;
         private int contAtrMax = 21;
 	
-
-	/**
-	 * Create a decision tree from a set of training instances.
-	 * @param input path to an input file containing training instances
-	 * @param targetAttribute the target attribute (that will be used for classification)
-	 * @param separator  the separator in the input file (e.g. space).
-	 * @return a decision tree
-	 * @throws IOException exception if error reading the file
-	 */
 	public DecisionTree runAlgorithm(String input, String targetAttribute,
 			String separator, int mode) throws IOException {	
 	
@@ -81,7 +72,7 @@ public class AlgoID3 {
 			String highestName = "";
 			for (Entry<String, Integer> entry : targetValuesFrequency
 					.entrySet()) {
-				// if the frequency is higher
+				
 				if (entry.getValue() > highestCount) {
 					highestCount = entry.getValue();
 					highestName = entry.getKey();
@@ -107,7 +98,7 @@ public class AlgoID3 {
 		for (String value : targetAttributeValues) {
 			Integer frequencyInt = targetValuesFrequency.get(value);
 			if(frequencyInt != null) {
-				double frequencyDouble = frequencyInt / (double) instances.size();
+				double frequencyDouble = frequencyInt / (double) totalInstances;
 				globalEntropy -= frequencyDouble * Math.log(frequencyDouble) / Math.log(2);
 			}
 		}
@@ -195,7 +186,8 @@ public class AlgoID3 {
 
 		for (Entry<String, Integer> entry : valuesFrequency.entrySet()) {
 
-			sum += entry.getValue() / ((double) instances.size())
+                    // sum += entry.getValue() / ((double) instances.size())	
+                    sum += entry.getValue() / ((double) totalInstances)
 					* calculateEntropyIfValue(instances, attributePos,
 							entry.getKey());
 		}		

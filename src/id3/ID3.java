@@ -21,7 +21,7 @@ public class ID3 {
         public static void main(String[] args) {
             try {
                 Algorithm id3 = new Algorithm();
-                String path = "diabetic_data(2000).csv";
+                String path = "diabetic_data.csv";
                 String separator = ",";                
                 int mode = 2;
                 DecisionTree tree = id3.run(path, separator, mode);

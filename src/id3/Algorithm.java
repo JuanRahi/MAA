@@ -86,7 +86,8 @@ public class Algorithm {
 		int index = 0;
 		for (Entry<String, List<String[]>> partition : partitions.entrySet()) {
 			attributeValues[index] = partition.getKey();
-			nodes[index] = id3(newRemainingAttribute, partition.getValue()); // recursive call
+                        // paso recursivo
+			nodes[index] = id3(newRemainingAttribute, partition.getValue()); 
 			index++;
 		}
 		
@@ -175,7 +176,7 @@ public class Algorithm {
 	private double calculateGain(int attributePos, List<String[]> instances, double globalEntropy) {
 
 		Map<String, Integer> valuesFrequency = calculateFrequencyOfAttributeValues(instances, attributePos);
-		double sum = 0;
+		double sum = 0d;
 
 		for (Entry<String, Integer> entry : valuesFrequency.entrySet()) {
                     // sum += entry.getValue() / ((double) instances.size())	

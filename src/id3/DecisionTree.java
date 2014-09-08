@@ -11,7 +11,7 @@ public class DecisionTree {
                 
 
 	public void print() {
-		System.out.println("DECISION TREE");
+		System.out.println("-------- DECISION TREE -------");
 		String indent = " ";
 		print(root, indent, "", 1);
 	}

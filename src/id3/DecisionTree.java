@@ -23,7 +23,7 @@ public class DecisionTree {
                         System.out.println("\033[31m" + indent + level + ". "  + value + "="+ node.className);                                                
 		}else{
 			DecisionNode node = (DecisionNode) nodeToPrint;
-			System.out.println(indent + level + ". " + allAttributes[node.attribute] + "->");
+			System.out.println(indent + level + ". " + allAttributes[node.attribute] + "--->>");
 			
 			for(int i=0; i< node.nodes.length; i++){
 				print(node.nodes[i], newIndent, node.attributeValues[i], level + 1);

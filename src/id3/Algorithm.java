@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,7 +38,7 @@ public class Algorithm {
             // readmitted
             indexTargetAttribute = allAttributes.length - 1;
 
-            List<String[]> instances = new ArrayList<String[]>();
+            List<String[]> instances = new ArrayList<>();
             while (((line = reader.readLine()) != null) ) { 	
                 String[] lineSplit = line.split(separator);
                 instances.add(lineSplit);
@@ -79,13 +78,7 @@ public class Algorithm {
                     return new ClassNode(className);
 		}
 
-                int[] newRemainingAttribute = new int[remainingAttributes.length - 1];
-		int pos = 0;
-		for (int i = 0; i < remainingAttributes.length; i++) {
-			if (remainingAttributes[i] != selectedAttribute.getIndex()) {
-				newRemainingAttribute[pos++] = remainingAttributes[i];
-			}
-		}
+                int[] newRemainingAttribute = updateRemainingAttributes(remainingAttributes, selectedAttribute);
 
 		Map<String, List<String[]>> partitions = createPartitions(instances, selectedAttribute);
                 String[] attributeValues = new String[partitions.size()];
@@ -100,72 +93,83 @@ public class Algorithm {
 		return new DecisionNode(selectedAttribute.getIndex(), nodes, attributeValues);
 	}
 
-    private Map<String, List<String[]>> createPartitions(List<String[]> instances, Attribute selectedAttribute) {
-        Map<String, List<String[]>> partitions = new HashMap<String, List<String[]>>();
-        for (String[] instance : instances) {
-            String value = instance[selectedAttribute.getIndex()];
-            // Atr con valores continuos
-            if (algoMode == 3 && selectedAttribute.getIndex() > contAtrMin && selectedAttribute.getIndex() < contAtrMax){
-                try{
-                    Double d = Double.parseDouble(instance[selectedAttribute.getIndex()]);
-                    int index = (int) (d/100);
-                    int limit = (index*100) + 100;
-                    value = "[" + Integer.toString(index*100) + " - " + Integer.toString(limit) +  "]";
-                }
-                catch(Exception ex){
+        private int[] updateRemainingAttributes(int[] remainingAttributes, Attribute selectedAttribute) {
+            int[] newRemainingAttribute = new int[remainingAttributes.length - 1];
+            int pos = 0;
+            for (int i = 0; i < remainingAttributes.length; i++) {
+                if (remainingAttributes[i] != selectedAttribute.getIndex()) {
+                    newRemainingAttribute[pos++] = remainingAttributes[i];
                 }
             }
-            
-            List<String[]> listInstances = partitions.get(value);
-            if (listInstances == null) {
-                listInstances = new ArrayList<String[]>();
-                partitions.put(value, listInstances);
-            }
-            listInstances.add(instance);
+            return newRemainingAttribute;
         }
-        return partitions;
-    }
 
-    private Attribute selectAttribute(int attributeWithHighestGain, double highestGain, int[] remainingAttributes, List<String[]> instances, double globalEntropy) {
-        for (int attribute : remainingAttributes) {
-            double gain = calculateGain(attribute, instances, globalEntropy);
-            if (gain >= highestGain) {
-                highestGain = gain;
-                attributeWithHighestGain = attribute;
+        private Map<String, List<String[]>> createPartitions(List<String[]> instances, Attribute selectedAttribute) {
+            Map<String, List<String[]>> partitions = new HashMap<>();
+            for (String[] instance : instances) {
+                String value = instance[selectedAttribute.getIndex()];
+                // Atr con valores continuos
+                if (algoMode == 3 && selectedAttribute.getIndex() > contAtrMin && selectedAttribute.getIndex() < contAtrMax){
+                    try{
+                        Double d = Double.parseDouble(instance[selectedAttribute.getIndex()]);
+                        int index = (int) (d/100);
+                        int limit = (index*100) + 100;
+                        value = "[" + Integer.toString(index*100) + " - " + Integer.toString(limit) +  "]";
+                    }
+                    catch(Exception ex){
+                    }
+                }
+
+                List<String[]> listInstances = partitions.get(value);
+                if (listInstances == null) {
+                    listInstances = new ArrayList<>();
+                    partitions.put(value, listInstances);
+                }
+                listInstances.add(instance);
             }
-        }     
-        return new Attribute(attributeWithHighestGain, highestGain);
-    }
+            return partitions;
+        }
+
+        private Attribute selectAttribute(int attributeWithHighestGain, double highestGain, int[] remainingAttributes, List<String[]> instances, double globalEntropy) {
+            for (int attribute : remainingAttributes) {
+                double gain = calculateGain(attribute, instances, globalEntropy);
+                if (gain >= highestGain) {
+                    highestGain = gain;
+                    attributeWithHighestGain = attribute;
+                }
+            }     
+            return new Attribute(attributeWithHighestGain, highestGain);
+        }
     
 
-    private double calculateEntropy(Map<String, Integer> targetValuesFrequency) {
-        double globalEntropy = 0d;
-        for (String value : targetAttributeValues) {
-            Integer frequencyInt = targetValuesFrequency.get(value);
-            if(frequencyInt != null) {
-                double frequencyDouble = frequencyInt / (double) totalInstances;
-                globalEntropy -= frequencyDouble * Math.log(frequencyDouble) / Math.log(2);
+        private double calculateEntropy(Map<String, Integer> targetValuesFrequency) {
+            double globalEntropy = 0d;
+            for (String value : targetAttributeValues) {
+                Integer frequencyInt = targetValuesFrequency.get(value);
+                if(frequencyInt != null) {
+                    double frequencyDouble = frequencyInt / (double) totalInstances;
+                    globalEntropy -= frequencyDouble * Math.log(frequencyDouble) / Math.log(2);
+                }
             }
+            return globalEntropy;
         }
-        return globalEntropy;
-    }
 
-    private Node lastAttribute(List<String[]> instances) {
-        Map<String, Integer> targetValuesFrequency = calculateFrequencyOfAttributeValues(
-                instances, indexTargetAttribute);
-        
-        int highestCount = 0;
-        String highestName = "";
-        for (Entry<String, Integer> entry : targetValuesFrequency
-                .entrySet()) {
-            
-            if (entry.getValue() > highestCount) {
-                highestCount = entry.getValue();
-                highestName = entry.getKey();
+        private Node lastAttribute(List<String[]> instances) {
+            Map<String, Integer> targetValuesFrequency = calculateFrequencyOfAttributeValues(
+                    instances, indexTargetAttribute);
+
+            int highestCount = 0;
+            String highestName = "";
+            for (Entry<String, Integer> entry : targetValuesFrequency
+                    .entrySet()) {
+
+                if (entry.getValue() > highestCount) {
+                    highestCount = entry.getValue();
+                    highestName = entry.getKey();
+                }
             }
+            return new ClassNode(highestName);
         }
-        return new ClassNode(highestName);
-    }
 
         
 	private double calculateGain(int attributePos, List<String[]> instances, double globalEntropy) {
@@ -199,8 +203,7 @@ public class Algorithm {
         }
                 
 	private double calculateEntropyIfValue(List<String[]> instances, int attributeIF, String valueIF) {
-            int instancesCount = 0;
-            Map<String, Integer> valuesFrequency = new HashMap<String, Integer>();
+            Map<String, Integer> valuesFrequency = new HashMap<>();
 		
             for (String[] instance : instances) {
                 if (instance[attributeIF].equals(valueIF)) {
@@ -208,15 +211,13 @@ public class Algorithm {
                     if (valuesFrequency.get(targetValue) == null)
                         valuesFrequency.put(targetValue, 1);
                     else 
-                        valuesFrequency.put(targetValue, valuesFrequency.get(targetValue) + 1);
-                    instancesCount++; 
+                        valuesFrequency.put(targetValue, valuesFrequency.get(targetValue) + 1); 
                 }
             }
             double entropy = 0;
             for (String value : targetAttributeValues) {
                     Integer count = valuesFrequency.get(value);
-                    if (count != null) {
-                            //double frequency = count / (double) instancesCount;
+                    if (count != null) {                            
                             double frequency = count / (double) totalInstances;
                             entropy -= frequency * Math.log(frequency) / Math.log(2);
                     }
@@ -225,7 +226,7 @@ public class Algorithm {
 	}
 
 	private Map<String, Integer> calculateFrequencyOfAttributeValues(List<String[]> instances, int indexAttribute) {		
-            Map<String, Integer> targetValuesFrequency = new HashMap<String, Integer>();
+            Map<String, Integer> targetValuesFrequency = new HashMap<>();
             for (String[] instance : instances) {
                 if (algoMode == 3 && indexAttribute > contAtrMin && indexAttribute < contAtrMax)
                     continuousAttributes(targetValuesFrequency, instance, indexAttribute);                        

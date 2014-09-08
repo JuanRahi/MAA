@@ -87,28 +87,7 @@ public class Algorithm {
 			}
 		}
 
-		Map<String, List<String[]>> partitions = new HashMap<String, List<String[]>>();
-		for (String[] instance : instances) {
-                    String value = instance[selectedAttribute.getIndex()];
-                    // Atr con valores continuos
-                    if (algoMode == 3 && selectedAttribute.getIndex() > contAtrMin && selectedAttribute.getIndex() < contAtrMax){
-                        try{    
-                            Double d = Double.parseDouble(instance[selectedAttribute.getIndex()]);
-                            int index = (int) (d/100);
-                            int limit = (index*100) + 100;
-                            value = "[" + Integer.toString(index*100) + " - " + Integer.toString(limit) +  "]";
-                        }
-                        catch(Exception ex){
-                        }
-                    }
-                			
-                    List<String[]> listInstances = partitions.get(value);
-                    if (listInstances == null) {
-                            listInstances = new ArrayList<String[]>();
-                            partitions.put(value, listInstances);
-                    }
-                    listInstances.add(instance);
-		}
+		Map<String, List<String[]>> partitions = createPartitions(instances, selectedAttribute);
                 String[] attributeValues = new String[partitions.size()];
                 Node[] nodes = new Node[partitions.size()];
 		int index = 0;
@@ -120,6 +99,32 @@ public class Algorithm {
 		
 		return new DecisionNode(selectedAttribute.getIndex(), nodes, attributeValues);
 	}
+
+    private Map<String, List<String[]>> createPartitions(List<String[]> instances, Attribute selectedAttribute) {
+        Map<String, List<String[]>> partitions = new HashMap<String, List<String[]>>();
+        for (String[] instance : instances) {
+            String value = instance[selectedAttribute.getIndex()];
+            // Atr con valores continuos
+            if (algoMode == 3 && selectedAttribute.getIndex() > contAtrMin && selectedAttribute.getIndex() < contAtrMax){
+                try{
+                    Double d = Double.parseDouble(instance[selectedAttribute.getIndex()]);
+                    int index = (int) (d/100);
+                    int limit = (index*100) + 100;
+                    value = "[" + Integer.toString(index*100) + " - " + Integer.toString(limit) +  "]";
+                }
+                catch(Exception ex){
+                }
+            }
+            
+            List<String[]> listInstances = partitions.get(value);
+            if (listInstances == null) {
+                listInstances = new ArrayList<String[]>();
+                partitions.put(value, listInstances);
+            }
+            listInstances.add(instance);
+        }
+        return partitions;
+    }
 
     private Attribute selectAttribute(int attributeWithHighestGain, double highestGain, int[] remainingAttributes, List<String[]> instances, double globalEntropy) {
         for (int attribute : remainingAttributes) {

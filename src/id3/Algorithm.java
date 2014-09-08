@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class AlgoID3 {
+public class Algorithm {
 	private String[] allAttributes; 
 	private int indexTargetAttribute = -1; 
 	private Set<String> targetAttributeValues = new HashSet<>(); 
@@ -20,8 +20,9 @@ public class AlgoID3 {
         private int totalInstances = -1; 
         private int contAtrMin = 17;
         private int contAtrMax = 21;
+
 	
-	public DecisionTree runAlgorithm(String input, String targetAttribute, String separator, int mode) throws IOException {	
+	public DecisionTree run(String input, String separator, int mode) throws IOException {	
             algoMode = mode;
             BufferedReader reader = new BufferedReader(new FileReader(input));
 
@@ -35,6 +36,7 @@ public class AlgoID3 {
             }
 
             //Asumimos que el indice del targetAttribute es el ultimo
+            // readmitted
             indexTargetAttribute = allAttributes.length - 1;
 
             List<String[]> instances = new ArrayList<String[]>();
@@ -51,20 +53,7 @@ public class AlgoID3 {
 
 	private Node id3(int[] remainingAttributes, List<String[]> instances) {
 		if (remainingAttributes.length== 0) {
-			Map<String, Integer> targetValuesFrequency = calculateFrequencyOfAttributeValues(
-					instances, indexTargetAttribute);
-			
-			int highestCount = 0;
-			String highestName = "";
-			for (Entry<String, Integer> entry : targetValuesFrequency
-					.entrySet()) {
-				
-				if (entry.getValue() > highestCount) {
-					highestCount = entry.getValue();
-					highestName = entry.getKey();
-				}
-			}
-			return new ClassNode(highestName);
+			return lastAttribute(instances);
 		}
 
 		Map<String, Integer> targetValuesFrequency = calculateFrequencyOfAttributeValues(
@@ -74,26 +63,11 @@ public class AlgoID3 {
                     return new ClassNode(targetValuesFrequency.keySet().toArray()[0].toString());
 
 
-		double globalEntropy = 0d;
-		for (String value : targetAttributeValues) {
-			Integer frequencyInt = targetValuesFrequency.get(value);
-			if(frequencyInt != null) {
-				double frequencyDouble = frequencyInt / (double) totalInstances;
-				globalEntropy -= frequencyDouble * Math.log(frequencyDouble) / Math.log(2);
-			}
-		}
-
-		int attributeWithHighestGain = 0;
-		double highestGain = Double.NEGATIVE_INFINITY;
-		for (int attribute : remainingAttributes) {
-			double gain = calculateGain(attribute, instances, globalEntropy);
-			if (gain >= highestGain) {
-				highestGain = gain;
-				attributeWithHighestGain = attribute;
-			}
-		}
-	
-		if (highestGain == 0) {
+		double globalEntropy = calculateEntropy(targetValuesFrequency);
+   
+                Attribute selectedAttribute = selectAttribute(0, Double.NEGATIVE_INFINITY, remainingAttributes, instances, globalEntropy);
+                
+		if (selectedAttribute.getGain() == 0) {
                     int topFrequency = 0;
                     String className = null;
                     for(Entry<String, Integer> entry: targetValuesFrequency.entrySet()) {
@@ -108,18 +82,18 @@ public class AlgoID3 {
                 int[] newRemainingAttribute = new int[remainingAttributes.length - 1];
 		int pos = 0;
 		for (int i = 0; i < remainingAttributes.length; i++) {
-			if (remainingAttributes[i] != attributeWithHighestGain) {
+			if (remainingAttributes[i] != selectedAttribute.getIndex()) {
 				newRemainingAttribute[pos++] = remainingAttributes[i];
 			}
 		}
 
 		Map<String, List<String[]>> partitions = new HashMap<String, List<String[]>>();
 		for (String[] instance : instances) {
-                    String value = instance[attributeWithHighestGain];
+                    String value = instance[selectedAttribute.getIndex()];
                     // Atr con valores continuos
-                    if (algoMode == 3 && attributeWithHighestGain > contAtrMin && attributeWithHighestGain < contAtrMax){
+                    if (algoMode == 3 && selectedAttribute.getIndex() > contAtrMin && selectedAttribute.getIndex() < contAtrMax){
                         try{    
-                            Double d = Double.parseDouble(instance[attributeWithHighestGain]);
+                            Double d = Double.parseDouble(instance[selectedAttribute.getIndex()]);
                             int index = (int) (d/100);
                             int limit = (index*100) + 100;
                             value = "[" + Integer.toString(index*100) + " - " + Integer.toString(limit) +  "]";
@@ -144,8 +118,49 @@ public class AlgoID3 {
 			index++;
 		}
 		
-		return new DecisionNode(attributeWithHighestGain, nodes, attributeValues);
+		return new DecisionNode(selectedAttribute.getIndex(), nodes, attributeValues);
 	}
+
+    private Attribute selectAttribute(int attributeWithHighestGain, double highestGain, int[] remainingAttributes, List<String[]> instances, double globalEntropy) {
+        for (int attribute : remainingAttributes) {
+            double gain = calculateGain(attribute, instances, globalEntropy);
+            if (gain >= highestGain) {
+                highestGain = gain;
+                attributeWithHighestGain = attribute;
+            }
+        }     
+        return new Attribute(attributeWithHighestGain, highestGain);
+    }
+    
+
+    private double calculateEntropy(Map<String, Integer> targetValuesFrequency) {
+        double globalEntropy = 0d;
+        for (String value : targetAttributeValues) {
+            Integer frequencyInt = targetValuesFrequency.get(value);
+            if(frequencyInt != null) {
+                double frequencyDouble = frequencyInt / (double) totalInstances;
+                globalEntropy -= frequencyDouble * Math.log(frequencyDouble) / Math.log(2);
+            }
+        }
+        return globalEntropy;
+    }
+
+    private Node lastAttribute(List<String[]> instances) {
+        Map<String, Integer> targetValuesFrequency = calculateFrequencyOfAttributeValues(
+                instances, indexTargetAttribute);
+        
+        int highestCount = 0;
+        String highestName = "";
+        for (Entry<String, Integer> entry : targetValuesFrequency
+                .entrySet()) {
+            
+            if (entry.getValue() > highestCount) {
+                highestCount = entry.getValue();
+                highestName = entry.getKey();
+            }
+        }
+        return new ClassNode(highestName);
+    }
 
         
 	private double calculateGain(int attributePos, List<String[]> instances, double globalEntropy) {
@@ -234,17 +249,7 @@ public class AlgoID3 {
             }
             catch(Exception e){
             }    
-        }
-
-	public void printStatistics() {
-		System.out.println("Target attribute = "
-				+ allAttributes[indexTargetAttribute]);
-		System.out.print("Other attributes = ");
-		for (String attribute : allAttributes) {
-			if (!attribute.equals(allAttributes[indexTargetAttribute])) {
-				System.out.print(attribute + " ");
-			}
-		}
-		System.out.println();
-	}
+        }     
 }
+
+   

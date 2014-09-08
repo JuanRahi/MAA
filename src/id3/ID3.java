@@ -20,13 +20,12 @@ public class ID3 {
     
         public static void main(String[] args) {
             try {
-                AlgoID3 id3 = new AlgoID3();
+                Algorithm id3 = new Algorithm();
                 String path = "diabetic_data(2000).csv";
-                String separator = ",";
-                String attr = "readmitted";                
+                String separator = ",";                
                 int mode = 2;
-                DecisionTree runAlgorithm = id3.runAlgorithm(path, attr, separator, mode);
-                runAlgorithm.print();
+                DecisionTree tree = id3.run(path, separator, mode);
+                tree.print();
             } catch (IOException ex) {
                 Logger.getLogger(ID3.class.getName()).log(Level.SEVERE, null, ex);
             }

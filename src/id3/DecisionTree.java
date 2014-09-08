@@ -3,6 +3,12 @@ package id3;
 public class DecisionTree {
 	String []allAttributes;
 	Node root = null;
+        
+        public DecisionTree(Node root, String[] allAttributes){
+            this.allAttributes = allAttributes;
+            this.root = root;
+        }
+                
 
 	public void print() {
 		System.out.println("DECISION TREE");

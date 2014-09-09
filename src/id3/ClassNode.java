@@ -1,9 +1,9 @@
 package id3;
 
 public class ClassNode extends Node{
-	public String className;
+	public String name;
         
-        public ClassNode(String className){
-            this.className = className;
+        public ClassNode(String name){
+            this.name = name;
         }
 }
